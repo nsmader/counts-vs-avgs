@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.361">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Medicaid Eligibility Across Chicago Neighborhoods</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="medicaid-in-chicago_files/libs/clipboard/clipboard.min.js"></script>
+<script src="medicaid-in-chicago_files/libs/quarto-html/quarto.js"></script>
+<script src="medicaid-in-chicago_files/libs/quarto-html/popper.min.js"></script>
+<script src="medicaid-in-chicago_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="medicaid-in-chicago_files/libs/quarto-html/anchor.min.js"></script>
+<link href="medicaid-in-chicago_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="medicaid-in-chicago_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="medicaid-in-chicago_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="medicaid-in-chicago_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="medicaid-in-chicago_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+<script src="medicaid-in-chicago_files/libs/htmlwidgets-1.6.2/htmlwidgets.js"></script>
+<link href="medicaid-in-chicago_files/libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet">
+<script src="medicaid-in-chicago_files/libs/datatables-binding-0.29/datatables.js"></script>
+<script src="medicaid-in-chicago_files/libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<link href="medicaid-in-chicago_files/libs/dt-core-1.13.4/css/jquery.dataTables.min.css" rel="stylesheet">
+<link href="medicaid-in-chicago_files/libs/dt-core-1.13.4/css/jquery.dataTables.extra.css" rel="stylesheet">
+<script src="medicaid-in-chicago_files/libs/dt-core-1.13.4/js/jquery.dataTables.min.js"></script>
+<link href="medicaid-in-chicago_files/libs/crosstalk-1.2.0/css/crosstalk.min.css" rel="stylesheet">
+<script src="medicaid-in-chicago_files/libs/crosstalk-1.2.0/js/crosstalk.min.js"></script>
+<script src="medicaid-in-chicago_files/libs/plotly-binding-4.10.2/plotly.js"></script>
+<script src="medicaid-in-chicago_files/libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="medicaid-in-chicago_files/libs/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet">
+<script src="medicaid-in-chicago_files/libs/plotly-main-2.11.1/plotly-latest.min.js"></script>
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Medicaid Eligibility Across Chicago Neighborhoods</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>To enable caching of data, set `options(tigris_use_cache = TRUE)`
+in your R script or .Rprofile.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Linking to GEOS 3.11.2, GDAL 3.6.2, PROJ 9.2.0; sf_use_s2() is TRUE</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'plotly'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:ggplot2':
+
+    last_plot</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:stats':
+
+    filter</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:graphics':
+
+    layout</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>Skipping install of 'cmapgeo' from a github remote, the SHA1 (3979d2be) has not changed since last install.
+  Use `force = TRUE` to force installation</code></pre>
+</div>
+</div>
+<section id="medicaid-rules" class="level1">
+<h1>Medicaid Rules</h1>
+<p>Illinois Legal Aid confirms that <a href="https://www.illinoislegalaid.org/legal-information/am-i-eligible-medicaid">Medicaid eligibility for adults in Illinois</a> is 138% of the federal poverty level.</p>
+</section>
+<section id="data-sources" class="level1">
+<h1>Data Sources</h1>
+<p>The American Community Survey (ACS) 5-Year release has data down to the Census tract level, which each represent approximately 4,000 individuals. There are approximately 800 Census tracts in the city of Chicago.</p>
+<p><a href="https://www.socialexplorer.com/data/ACS2021_5yr/metadata/?ds=ACS21_5yr&amp;table=C17002">Table C17002</a> – “Ratio Of Income To Poverty Level In The Past 12 Months” – summarizes income to as fine as 25% intervals of income-to-poverty ratio.</p>
+<p>To estimate the number of adults that are Medicaid eligible by tract, we simply assume that <code>54%</code> of individuals with income reported between <code>125-149%</code> of the federal poverty line (FPL) to be below <code>138%</code> (FPL) and thus to be Medicaid eligible.[^`54%=(138-125)/(149-125)`]</p>
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>Getting data from the 2017-2021 5-year ACS</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by 'cca_name'. You can override using the
+`.groups` argument.</code></pre>
+</div>
+</div>
+</section>
+<section id="medicaid-across-chicago-neighborhoods" class="level1">
+<h1>Medicaid Across Chicago Neighborhoods</h1>
+<div id="tbl-ranks" class="cell tbl-parent quarto-layout-panel anchored">
+<div class="panel-caption table-caption">
+<p><strong>?(caption)</strong></p>
+</div>
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="cell-output-display quarto-layout-cell" style="flex-basis: 100.0%;justify-content: center;">
+
+<div class="datatables html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-2c0f49cab720e710855c" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-2c0f49cab720e710855c">{"x":{"filter":"none","vertical":false,"data":[["Albany Park","Archer Heights","Armour Square","Ashburn","Auburn Gresham","Austin","Avalon Park","Avondale","Belmont Cragin","Beverly","Bridgeport","Brighton Park","Burnside","Calumet Heights","Chatham","Chicago Lawn","Clearing","Douglas","Dunning","East Garfield Park","East Side","Edgewater","Edison Park","Englewood","Forest Glen","Fuller Park","Gage Park","Garfield Ridge","Grand Boulevard","Greater Grand Crossing","Hegewisch","Hermosa","Humboldt Park","Hyde Park","Irving Park","Jefferson Park","Kenwood","Lake View","Lincoln Park","Lincoln Square","Logan Square","Loop","Lower West Side","McKinley Park","Montclare","Morgan Park","Mount Greenwood","Near North Side","Near South Side","Near West Side","New City","North Center","North Lawndale","North Park","Norwood Park","O'Hare","Oakland","Portage Park","Pullman","Riverdale","Rogers Park","Roseland","South Chicago","South Deering","South Lawndale","South Shore","Uptown","Washington Heights","Washington Park","West Elsdon","West Englewood","West Garfield Park","West Lawn","West Pullman","West Ridge","West Town","Woodlawn"],[5.546810260136572,1.000526498038591,4.938877805048667,1.763336310601194,4.354020140864611,4.997298906964668,1.923738459787811,3.263789830646354,4.611331856658079,0.5043143859395858,3.665849487076795,5.312460106198231,1.182651575974336,1.304670234102853,3.542343167927953,4.874207920553964,1.818194198267066,4.286176437801121,1.457766215714089,5.502912739828338,2.066053332424981,6.487699060696763,0.6758920444574529,3.464444150230754,0.3856582808094207,1.765084266583252,4.433894517013559,1.028672824451898,4.388221135111915,3.664545487658714,0.4073875597520809,4.371330628386631,5.169444843459147,4.565084290366556,2.682644068737836,1.378702662425888,5.142858642507796,3.363060500092555,2.162621182647237,2.268879976661133,3.041176655548838,2.487876923075817,2.832256217258193,2.234836431608121,3.028811074037175,1.213722547616931,0.5030957834866249,4.222342043152947,1.706213011554539,2.489298863561961,3.219216138038836,1.250893785741313,4.71039838389823,1.421511231151547,0.8944652291511808,0.194485326631725,5.071658649908075,2.208593937229276,0.7578944851932136,1.434587460409686,8.671362769667446,2.48264715925558,3.564896403257388,0.5832680231748619,4.680584242924467,6.789277586377533,6.735803763583605,2.143152524674999,4.124467325430542,3.061322886340713,3.586090007309296,6.057994822281112,2.671832492201205,2.304841740000826,6.028621363904451,2.29866991648585,4.388489676760156],[0.2260151907328043,0.1478017527063848,0.3710212701764972,0.1960954844025359,0.3431768273554324,0.3717616445485298,0.2458597423839706,0.1763664105498338,0.2309799303706738,0.08138650990726194,0.2231116285839033,0.3366544066297313,0.2718702865761689,0.1784319850070279,0.3226005428077967,0.336321465620168,0.1822180333019164,0.3723023476155385,0.1227704371869547,0.5429855013273432,0.2525277334315773,0.2051715980638352,0.0668584379358438,0.507994081993032,0.06070602136773177,0.569814731134207,0.2742312128970543,0.1197324598827448,0.3165906262961427,0.450008658008658,0.2314453125,0.220449350985381,0.3355303439582208,0.2785488007240911,0.160061626417686,0.1185294661001293,0.2932684420626674,0.1028405536440413,0.1033691929326916,0.1387972656436732,0.1561605814352753,0.1141476880607315,0.2469743039408573,0.2047014635409921,0.2198415027883769,0.1894029073346276,0.07231087313788899,0.1203631727869158,0.1142878583220771,0.2326980942828485,0.3951957295373665,0.06918918918918919,0.4761155020940265,0.1966097975752921,0.1010327911179964,0.1933224027425846,0.4175600488533044,0.1335618010189251,0.2244298306981951,0.6403996964330888,0.3027092707562036,0.3104978973054359,0.394307061623909,0.4200647676954596,0.3557004766949153,0.3868963240577121,0.2717674908852142,0.2321313464528116,0.5418323249783924,0.1993119520585951,0.4314645308924485,0.4594341280534239,0.245213228894691,0.3052087977411205,0.2699840178594079,0.1233681691825891,0.4335048108983519]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Community Area<\/th>\n      <th># Eligible (thousands per sq mi)<\/th>\n      <th>% Eligible<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"targets":1,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatRound(data, 2, 3, \",\", \".\", null);\n  }"},{"targets":2,"render":"function(data, type, row, meta) {\n    return type !== 'display' ? data : DTWidget.formatPercentage(data, 0, 3, \",\", \".\", null);\n  }"},{"className":"dt-right","targets":[1,2]}],"order":[],"autoWidth":false,"orderClasses":false},"selection":{"mode":"multiple","selected":null,"target":"row","selectable":null}},"evals":["options.columnDefs.0.render","options.columnDefs.1.render"],"jsHooks":[]}</script>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div id="fig-scatter" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<div class="plotly html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-46a08ca91c9a6af98e03" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-46a08ca91c9a6af98e03">{"x":{"data":[{"x":[0.060706021367731768,0.068043915988812237,0.075381810609892713,0.082719705230973176,0.090057599852053638,0.097395494473134114,0.10473338909421459,0.11207128371529505,0.11940917833637552,0.12674707295745599,0.13408496757853647,0.14142286219961692,0.14876075682069739,0.15609865144177787,0.16343654606285835,0.17077444068393879,0.17811233530501927,0.18545022992609975,0.19278812454718022,0.20012601916826067,0.20746391378934115,0.21480180841042162,0.22213970303150207,0.22947759765258255,0.23681549227366303,0.2441533868947435,0.25149128151582401,0.25882917613690443,0.2661670707579849,0.27350496537906538,0.28084286000014586,0.28818075462122633,0.29551864924230681,0.30285654386338728,0.31019443848446776,0.31753233310554824,0.32487022772662871,0.33220812234770913,0.33954601696878961,0.34688391158987009,0.35422180621095056,0.36155970083203104,0.36889759545311152,0.37623549007419199,0.38357338469527241,0.39091127931635289,0.39824917393743337,0.40558706855851384,0.41292496317959432,0.42026285780067479,0.42760075242175527,0.43493864704283575,0.44227654166391622,0.44961443628499664,0.45695233090607712,0.4642902255271576,0.47162812014823807,0.47896601476931855,0.48630390939039903,0.4936418040114795,0.50097969863255987,0.50831759325364034,0.51565548787472082,0.5229933824958013,0.53033127711688177,0.53766917173796225,0.54500706635904272,0.5523449609801232,0.55968285560120368,0.56702075022228415,0.57435864484336463,0.58169653946444511,0.58903443408552558,0.59637232870660595,0.60371022332768642,0.6110481179487669,0.61838601256984738,0.62572390719092785,0.63306180181200833,0.64039969643308881],"y":[1.8580536478777381,1.9039931858941634,1.9499327239105888,1.9958722619270142,2.0418117999434395,2.0877513379598649,2.1336908759762903,2.1796304139927156,2.225569952009141,2.2715094900255663,2.3174490280419917,2.3633885660584171,2.4093281040748424,2.4552676420912678,2.5012071801076932,2.5471467181241181,2.5930862561405439,2.6390257941569688,2.6849653321733946,2.7309048701898195,2.7768444082062453,2.8227839462226703,2.8687234842390956,2.914663022255521,2.9606025602719468,3.0065420982883717,3.0524816363047975,3.0984211743212224,3.1443607123376482,3.1903002503540732,3.236239788370499,3.2821793263869239,3.3281188644033497,3.3740584024197746,3.4199979404362004,3.4659374784526258,3.5118770164690511,3.5578165544854761,3.6037560925019014,3.6496956305183268,3.6956351685347522,3.7415747065511775,3.7875142445676029,3.8334537825840287,3.8793933206004536,3.925332858616879,3.9712723966333043,4.0172119346497297,4.0631514726661546,4.1090910106825804,4.1550305486990062,4.2009700867154312,4.2469096247318561,4.2928491627482819,4.3387887007647077,4.3847282387811326,4.4306677767975575,4.4766073148139833,4.5225468528304091,4.5684863908468341,4.614425928863259,4.6603654668796839,4.7063050048961097,4.7522445429125355,4.7981840809289604,4.8441236189453853,4.8900631569618112,4.936002694978237,4.9819422329946619,5.0278817710110868,5.0738213090275126,5.1197608470439384,5.1657003850603633,5.2116399230767883,5.2575794610932132,5.303518999109639,5.3494585371260648,5.3953980751424897,5.4413376131589146,5.4872771511753404],"text":"cca_name: black","type":"scatter","mode":"lines","name":"fitted values","line":{"width":3.7795275590551185,"color":"rgba(0,0,0,1)","dash":"solid"},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.22601519073280435],"y":[5.5468102601365716],"text":"cca_name: Albany Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Albany Park","legendgroup":"Albany Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.14780175270638485],"y":[1.0005264980385913],"text":"cca_name: Archer Heights","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Archer Heights","legendgroup":"Archer Heights","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.37102127017649722],"y":[4.9388778050486675],"text":"cca_name: Armour Square","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Armour Square","legendgroup":"Armour Square","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.19609548440253588],"y":[1.7633363106011943],"text":"cca_name: Ashburn","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Ashburn","legendgroup":"Ashburn","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.34317682735543242],"y":[4.3540201408646109],"text":"cca_name: Auburn Gresham","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Auburn Gresham","legendgroup":"Auburn Gresham","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.37176164454852978],"y":[4.9972989069646676],"text":"cca_name: Austin","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Austin","legendgroup":"Austin","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.24585974238397057],"y":[1.9237384597878109],"text":"cca_name: Avalon Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Avalon Park","legendgroup":"Avalon Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.17636641054983379],"y":[3.2637898306463535],"text":"cca_name: Avondale","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Avondale","legendgroup":"Avondale","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.23097993037067377],"y":[4.6113318566580794],"text":"cca_name: Belmont Cragin","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Belmont Cragin","legendgroup":"Belmont Cragin","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.081386509907261942],"y":[0.50431438593958577],"text":"cca_name: Beverly","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Beverly","legendgroup":"Beverly","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.22311162858390335],"y":[3.6658494870767946],"text":"cca_name: Bridgeport","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Bridgeport","legendgroup":"Bridgeport","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.33665440662973134],"y":[5.3124601061982313],"text":"cca_name: Brighton Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Brighton Park","legendgroup":"Brighton Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.27187028657616891],"y":[1.1826515759743357],"text":"cca_name: Burnside","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Burnside","legendgroup":"Burnside","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.17843198500702795],"y":[1.3046702341028531],"text":"cca_name: Calumet Heights","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Calumet Heights","legendgroup":"Calumet Heights","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.32260054280779671],"y":[3.5423431679279527],"text":"cca_name: Chatham","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Chatham","legendgroup":"Chatham","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.33632146562016796],"y":[4.8742079205539639],"text":"cca_name: Chicago Lawn","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Chicago Lawn","legendgroup":"Chicago Lawn","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.18221803330191644],"y":[1.818194198267066],"text":"cca_name: Clearing","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Clearing","legendgroup":"Clearing","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.37230234761553849],"y":[4.2861764378011209],"text":"cca_name: Douglas","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Douglas","legendgroup":"Douglas","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.12277043718695466],"y":[1.4577662157140894],"text":"cca_name: Dunning","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Dunning","legendgroup":"Dunning","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.54298550132734325],"y":[5.5029127398283375],"text":"cca_name: East Garfield Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"East Garfield Park","legendgroup":"East Garfield Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.25252773343157725],"y":[2.0660533324249815],"text":"cca_name: East Side","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"East Side","legendgroup":"East Side","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.2051715980638352],"y":[6.4876990606967633],"text":"cca_name: Edgewater","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Edgewater","legendgroup":"Edgewater","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.066858437935843798],"y":[0.67589204445745288],"text":"cca_name: Edison Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Edison Park","legendgroup":"Edison Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.50799408199303198],"y":[3.4644441502307539],"text":"cca_name: Englewood","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Englewood","legendgroup":"Englewood","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.060706021367731768],"y":[0.38565828080942072],"text":"cca_name: Forest Glen","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Forest Glen","legendgroup":"Forest Glen","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.569814731134207],"y":[1.7650842665832525],"text":"cca_name: Fuller Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Fuller Park","legendgroup":"Fuller Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.27423121289705427],"y":[4.4338945170135586],"text":"cca_name: Gage Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Gage Park","legendgroup":"Gage Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.11973245988274477],"y":[1.0286728244518981],"text":"cca_name: Garfield Ridge","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Garfield Ridge","legendgroup":"Garfield Ridge","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.31659062629614265],"y":[4.3882211351119151],"text":"cca_name: Grand Boulevard","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Grand Boulevard","legendgroup":"Grand Boulevard","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.45000865800865802],"y":[3.6645454876587142],"text":"cca_name: Greater Grand Crossing","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Greater Grand Crossing","legendgroup":"Greater Grand Crossing","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.2314453125],"y":[0.40738755975208091],"text":"cca_name: Hegewisch","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Hegewisch","legendgroup":"Hegewisch","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.22044935098538099],"y":[4.3713306283866311],"text":"cca_name: Hermosa","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Hermosa","legendgroup":"Hermosa","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.33553034395822079],"y":[5.1694448434591473],"text":"cca_name: Humboldt Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Humboldt Park","legendgroup":"Humboldt Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.27854880072409111],"y":[4.5650842903665563],"text":"cca_name: Hyde Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(255,0,0,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(255,0,0,1)"}},"hoveron":"points","name":"Hyde Park","legendgroup":"Hyde Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.16006162641768604],"y":[2.6826440687378357],"text":"cca_name: Irving Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Irving Park","legendgroup":"Irving Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.11852946610012932],"y":[1.3787026624258882],"text":"cca_name: Jefferson Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Jefferson Park","legendgroup":"Jefferson Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.29326844206266744],"y":[5.1428586425077958],"text":"cca_name: Kenwood","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Kenwood","legendgroup":"Kenwood","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.10284055364404129],"y":[3.3630605000925549],"text":"cca_name: Lake View","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Lake View","legendgroup":"Lake View","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.10336919293269158],"y":[2.1626211826472366],"text":"cca_name: Lincoln Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Lincoln Park","legendgroup":"Lincoln Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.13879726564367323],"y":[2.2688799766611329],"text":"cca_name: Lincoln Square","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Lincoln Square","legendgroup":"Lincoln Square","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.15616058143527525],"y":[3.0411766555488384],"text":"cca_name: Logan Square","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Logan Square","legendgroup":"Logan Square","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.11414768806073154],"y":[2.4878769230758171],"text":"cca_name: Loop","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Loop","legendgroup":"Loop","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.24697430394085734],"y":[2.8322562172581929],"text":"cca_name: Lower West Side","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Lower West Side","legendgroup":"Lower West Side","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.20470146354099211],"y":[2.2348364316081213],"text":"cca_name: McKinley Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"McKinley Park","legendgroup":"McKinley Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.21984150278837686],"y":[3.0288110740371748],"text":"cca_name: Montclare","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Montclare","legendgroup":"Montclare","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.18940290733462758],"y":[1.2137225476169311],"text":"cca_name: Morgan Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Morgan Park","legendgroup":"Morgan Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.07231087313788899],"y":[0.50309578348662487],"text":"cca_name: Mount Greenwood","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Mount Greenwood","legendgroup":"Mount Greenwood","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.12036317278691583],"y":[4.2223420431529473],"text":"cca_name: Near North Side","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Near North Side","legendgroup":"Near North Side","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.11428785832207715],"y":[1.7062130115545393],"text":"cca_name: Near South Side","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Near South Side","legendgroup":"Near South Side","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.23269809428284854],"y":[2.4892988635619608],"text":"cca_name: Near West Side","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Near West Side","legendgroup":"Near West Side","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.39519572953736654],"y":[3.2192161380388362],"text":"cca_name: New City","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"New City","legendgroup":"New City","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.06918918918918919],"y":[1.2508937857413134],"text":"cca_name: North Center","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"North Center","legendgroup":"North Center","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.47611550209402653],"y":[4.7103983838982302],"text":"cca_name: North Lawndale","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"North Lawndale","legendgroup":"North Lawndale","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.19660979757529212],"y":[1.421511231151547],"text":"cca_name: North Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"North Park","legendgroup":"North Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.10103279111799639],"y":[0.89446522915118076],"text":"cca_name: Norwood Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Norwood Park","legendgroup":"Norwood Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.19332240274258458],"y":[0.19448532663172496],"text":"cca_name: O'Hare","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"O'Hare","legendgroup":"O'Hare","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.41756004885330439],"y":[5.0716586499080751],"text":"cca_name: Oakland","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Oakland","legendgroup":"Oakland","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.13356180101892509],"y":[2.208593937229276],"text":"cca_name: Portage Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Portage Park","legendgroup":"Portage Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.22442983069819505],"y":[0.75789448519321356],"text":"cca_name: Pullman","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Pullman","legendgroup":"Pullman","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.64039969643308881],"y":[1.434587460409686],"text":"cca_name: Riverdale","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Riverdale","legendgroup":"Riverdale","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.30270927075620363],"y":[8.6713627696674465],"text":"cca_name: Rogers Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Rogers Park","legendgroup":"Rogers Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.31049789730543587],"y":[2.4826471592555803],"text":"cca_name: Roseland","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Roseland","legendgroup":"Roseland","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.39430706162390899],"y":[3.5648964032573884],"text":"cca_name: South Chicago","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"South Chicago","legendgroup":"South Chicago","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.42006476769545964],"y":[0.58326802317486193],"text":"cca_name: South Deering","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"South Deering","legendgroup":"South Deering","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.35570047669491528],"y":[4.6805842429244668],"text":"cca_name: South Lawndale","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"South Lawndale","legendgroup":"South Lawndale","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.38689632405771213],"y":[6.7892775863775325],"text":"cca_name: South Shore","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"South Shore","legendgroup":"South Shore","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.27176749088521418],"y":[6.735803763583605],"text":"cca_name: Uptown","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Uptown","legendgroup":"Uptown","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.23213134645281158],"y":[2.1431525246749987],"text":"cca_name: Washington Heights","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Washington Heights","legendgroup":"Washington Heights","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.5418323249783924],"y":[4.1244673254305422],"text":"cca_name: Washington Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Washington Park","legendgroup":"Washington Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.19931195205859506],"y":[3.0613228863407129],"text":"cca_name: West Elsdon","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"West Elsdon","legendgroup":"West Elsdon","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.43146453089244852],"y":[3.5860900073092963],"text":"cca_name: West Englewood","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"West Englewood","legendgroup":"West Englewood","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.45943412805342393],"y":[6.0579948222811124],"text":"cca_name: West Garfield Park","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"West Garfield Park","legendgroup":"West Garfield Park","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.24521322889469105],"y":[2.6718324922012053],"text":"cca_name: West Lawn","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"West Lawn","legendgroup":"West Lawn","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.30520879774112053],"y":[2.3048417400008261],"text":"cca_name: West Pullman","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"West Pullman","legendgroup":"West Pullman","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.2699840178594079],"y":[6.0286213639044508],"text":"cca_name: West Ridge","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"West Ridge","legendgroup":"West Ridge","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.12336816918258911],"y":[2.2986699164858497],"text":"cca_name: West Town","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"West Town","legendgroup":"West Town","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.43350481089835191],"y":[4.3884896767601562],"text":"cca_name: Woodlawn","type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(127,127,127,1)","opacity":1,"size":5.6692913385826778,"symbol":"circle","line":{"width":1.8897637795275593,"color":"rgba(127,127,127,1)"}},"hoveron":"points","name":"Woodlawn","legendgroup":"Woodlawn","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0.27854880072409111],"y":[4.5650842903665563],"text":"Hyde Park","hovertext":"cca_name: Hyde Park","textfont":{"size":14.66456692913386,"color":"rgba(255,0,0,1)"},"type":"scatter","mode":"text","hoveron":"points","name":"Hyde Park","legendgroup":"Hyde Park","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":43.762557077625573,"r":7.3059360730593621,"b":40.182648401826491,"l":43.105022831050235},"font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724},"title":{"text":"Estimated Medicaid Eligibility by Chicago Community Area","font":{"color":"rgba(0,0,0,1)","family":"","size":17.534246575342465},"x":0,"xref":"paper"},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-0.03201998482165444,0.67241968125474327],"tickmode":"array","ticktext":["0%","20%","40%","60%"],"tickvals":[0,0.19999999999999998,0.40000000000000013,0.60000000000000009],"categoryorder":"array","categoryarray":["0%","20%","40%","60%"],"nticks":null,"ticks":"","tickcolor":null,"ticklen":3.6529680365296811,"tickwidth":0,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(235,235,235,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"y","title":{"text":"% Eligible","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-0.22935854552006113,9.0952066418192317],"tickmode":"array","ticktext":["0.0","2.5","5.0","7.5"],"tickvals":[0,2.4999999999999996,5,7.5],"categoryorder":"array","categoryarray":["0.0","2.5","5.0","7.5"],"nticks":null,"ticks":"","tickcolor":null,"ticklen":3.6529680365296811,"tickwidth":0,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(235,235,235,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"x","title":{"text":"# Eligible (thousands per sq mi)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":false,"legend":{"bgcolor":null,"bordercolor":null,"borderwidth":0,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.68949771689498}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"source":"A","attrs":{"67b821a94783":{"x":{},"y":{},"colour":{},"type":"scatter"},"67b83c42cc0":{"x":{},"y":{},"colour":{}},"67b822fdd65":{"x":{},"y":{},"colour":{},"label":{}}},"cur_data":"67b821a94783","visdat":{"67b821a94783":["function (y) ","x"],"67b83c42cc0":["function (y) ","x"],"67b822fdd65":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<figcaption class="figure-caption">Figure&nbsp;1: <strong>?(caption)</strong></figcaption>
+</figure>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

@@ -1,0 +1,167 @@
+---
+title: "Medicaid Eligibility Across Chicago Neighborhoods"
+format: html
+editor: visual
+echo: false
+---
+
+```{r}
+packages_list <- 
+  c("tigris", "tidycensus", "DT", "dplyr", "tidyr", "stringr", "sf", "devtools",
+    "scales", "ggplot2", "plotly")
+for (p in packages_list) {
+  if (!p %in% installed.packages()[, "Package"]) install.packages(p)
+  library(p, 
+          character.only = TRUE, 
+          quietly = TRUE)
+}
+```
+
+```{r}
+devtools::install_github("CMAP-REPOS/cmapgeo")
+
+library(cmapgeo, 
+        quietly = TRUE)
+```
+
+
+
+```{r}
+census_key <- readLines(con = "census-key.txt")
+Sys.setenv(census_api_key = census_key)
+```
+
+# Medicaid Rules
+
+Illinois Legal Aid confirms that [Medicaid eligibility for adults in Illinois](https://www.illinoislegalaid.org/legal-information/am-i-eligible-medicaid) is 138% of the federal poverty level.
+
+# Data Sources
+
+The American Community Survey (ACS) 5-Year release has data down to the Census tract level, which each represent approximately 4,000 individuals. There are approximately 800 Census tracts in the city of Chicago.
+
+[Table C17002](https://www.socialexplorer.com/data/ACS2021_5yr/metadata/?ds=ACS21_5yr&table=C17002) -- "Ratio Of Income To Poverty Level In The Past 12 Months" -- summarizes income to as fine as 25% intervals of income-to-poverty ratio. 
+
+To estimate the number of adults that are Medicaid eligible by tract, we simply assume that `54%` of individuals with income reported between `125-149%` of the federal poverty line (FPL) to be below `138%` (FPL) and thus to be Medicaid eligible.[^`54%=(138-125)/(149-125)`]
+
+```{r}
+#| label: check metadata
+
+meta <- 
+  load_variables(year = 2021, dataset = "acs5") %>% 
+  filter(str_detect(name, "C17")) %>% 
+  data.frame() %>% 
+  select(name, label) %>% 
+  mutate(group = 
+           case_when(str_detect(name, "1$")     ~ "Total",
+                     str_detect(name, "[2-4]$") ~ "Elig",
+                     str_detect(name, "5$")     ~ "Part",
+                     TRUE                       ~ "Non-Elig"))
+
+if (FALSE) {
+  View(meta)
+}
+```
+
+```{r}
+#| label: pull census data for Cook county
+pov <- 
+  get_acs(geography = "tract",
+          state = "IL", 
+          county = "Cook",
+          table = "C17002",
+          year = 2021) %>% 
+  select(variable, GEOID, estimate) %>% 
+  merge(meta,
+        by.x = c("variable"),
+        by.y = c("name"),
+        all.x = TRUE) %>% 
+  mutate(elig_num = case_when(group == "Part" ~ estimate*0.5416,
+                              group == "Non-Elig" ~ 0,
+                              TRUE ~ estimate)) %>% 
+  select(-variable)
+
+if (FALSE) {
+  pov %>% filter(GEOID == 17031010100) %>% select(label, group, estimate, elig_num)
+}
+
+```
+
+
+```{r}
+#| label: summarize and reshape
+
+stats <- 
+  pov %>% 
+  filter(str_detect(group, "Elig|Part")) %>% 
+  group_by(GEOID) %>% 
+  summarize(elig = round(sum(elig_num))) %>% 
+  merge(pov %>% filter(group == "Total") %>% select(GEOID, tot = elig_num),
+        by = "GEOID") %>% 
+  mutate(pct = elig / tot)
+  
+```
+
+```{r}
+#| label: merge poverty data into geographies and CCAs
+stats_cca <- 
+  merge(stats,
+        xwalk_tract2cca %>% filter(pop_pct > 0.95),
+        by.x = "GEOID",
+        by.y = "geoid_tract",
+        all.y = TRUE) %>% 
+  merge(cca_sf %>% select(cca_num, cca_name, sqmi) %>% as.data.frame(),
+        by = "cca_num") %>% 
+  group_by(cca_name, sqmi) %>% 
+  summarize(elig = sum(elig),
+            tot = sum(tot)) %>% 
+  mutate(pct = elig / tot,
+         elig_sqmi = elig / sqmi / 1000)
+```
+
+# Medicaid Across Chicago Neighborhoods
+
+```{r}
+#| label: tbl-ranks
+datatable(stats_cca %>% select(cca_name, elig_sqmi, pct), 
+          colnames = c("Community Area" = "cca_name",
+                       "# Eligible (thousands per sq mi)" = "elig_sqmi",
+                       "% Eligible" = "pct"),
+          rownames = FALSE) %>% 
+  formatPercentage(columns = "% Eligible") %>% 
+  formatRound(columns = c("# Eligible (thousands per sq mi)"))
+  
+```
+
+```{r}
+#| label: fig-scatter
+
+my_scat <- 
+  stats_cca %>% 
+  ggplot(aes(x = pct,
+             y = elig_sqmi,
+             color = cca_name)) +
+  geom_smooth(method = "lm",
+              se = FALSE, color = "black") + 
+  geom_point() +
+  geom_text(data = stats_cca %>% filter(str_detect(cca_name, "Hyde")),
+             aes(x = pct,
+                 y = elig_sqmi,
+                 label = cca_name),
+            hjust = 0.5,
+            vjust = +2) +
+  scale_color_manual(breaks = c("Hyde Park"),
+                     values = c("red", rep("gray", 76))) +
+  scale_x_continuous(labels = percent, 
+                     limits = c(0, NA)) +
+  labs(title = "Estimated Medicaid Eligibility by Chicago Community Area",
+       subtitle = "Counts (by area) vs Percent Eligibility",
+       x = "% Eligible",
+       y = "# Eligible (thousands per sq mi)",
+       caption = "Source: American Community Survey 5-Year Data, 2021, Table C17002, with author's calculations.") +
+  theme_minimal() +
+  theme(legend.position = "none")
+  
+ggplotly(my_scat,
+         tooltip = "color")
+
+```
